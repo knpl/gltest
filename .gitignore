@@ -1,0 +1,8 @@
+.git
+.vs
+Debug
+x64
+glfw_test/*.vcxproj*
+glfw_test/x64
+glfw_test/Debug
+glfw_test.sln
