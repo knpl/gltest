@@ -8,6 +8,15 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
+#include <chrono>
+
+#define _USE_MATH_DEFINES
+#include <math.h>
+
+#include <glm/vec4.hpp>
+#include <glm/mat4x4.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
 #define WINDOW_WIDTH 1280
 #define WINDOW_HEIGHT 720
 
@@ -134,6 +143,24 @@ void start(GLFWwindow *window) {
 		"C:\\Users\\rene\\source\\repos\\glfw_test\\glfw_test\\vertex.vs", 
 		"C:\\Users\\rene\\source\\repos\\glfw_test\\glfw_test\\fragment.fs");
 
+	glm::mat4 scale(1.0f);
+	glm::mat4 rotation(1.0f); // identity. No rotation yet.
+	glm::mat4 translate(1.0f); // identity. No translation yet.
+
+	glm::mat4 model = translate * rotation * scale;
+
+	glm::vec3 cam_pos(0.0f, 0.0f, 3.0f);
+	glm::vec3 look_at(0.0f, 0.0f, 0.0f);
+	glm::vec3 up(0.0f, 1.0f, 0.0f);
+
+	glm::mat4 view = glm::lookAt(cam_pos, look_at, up);
+
+	glm::mat4 projection = glm::perspective(glm::radians(45.0f), float(WINDOW_WIDTH) / float(WINDOW_HEIGHT), 0.1f, 100.0f);
+
+	glm::mat4 mvp = projection * view * model;
+
+	GLuint mvp_uni_loc = glGetUniformLocation(prog, "mvp");
+
 	while (!glfwWindowShouldClose(window)) {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -142,6 +169,20 @@ void start(GLFWwindow *window) {
 		glEnableVertexAttribArray(0);
 		glBindBuffer(GL_ARRAY_BUFFER, vbo);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+
+
+		auto now = std::chrono::system_clock::now();
+		long millis_since_epoch = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
+
+		double the = (millis_since_epoch / 1000.0) * 2.0 * M_PI;
+
+		cam_pos = glm::vec3(3.0 * cos(the), 0.0, 3.0 * sin(the));
+		look_at = glm::vec3(0.0, 0.0, 0.0);
+		up = glm::vec3(0.0, 1.0, 0.0);
+		view = glm::lookAt(cam_pos, look_at, up);
+		mvp = projection * view * model;
+
+		glUniformMatrix4fv(mvp_uni_loc, 1, GL_FALSE, &mvp[0][0]);
 
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 		glDisableVertexAttribArray(0);
